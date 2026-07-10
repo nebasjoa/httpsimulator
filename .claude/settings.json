@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx nuxt *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"echo status: %{http_code}\\\\n\" \"http://localhost:3000/api/echo?status=302\" -X POST -H \"Content-Type: application/x-www-form-urlencoded\" --data \"a=1\")",
+      "Bash(curl -s -o /dev/null -w \"home: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -X POST \"http://localhost:3000/api/echo?status=204\" -o /dev/null -w \"204 body-none check status: %{http_code} size: %{size_download}\\\\n\")",
+      "Bash(curl -s \"http://localhost:3000/api/echo?status=302\" -D - -o /dev/null)",
+      "Bash(gh auth *)"
+    ]
+  }
+}
