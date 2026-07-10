@@ -28,7 +28,7 @@ function colorFor(requestIndex: number): string {
     <p class="intro">
       Same {{ requestCount }} parallel requests, two very different wire strategies. HTTP/1.1 has no
       pipelining, so a browser opens up to 6 TCP connections and queues the rest. HTTP/2 multiplexes
-      every request as interleaved frames on a single connection — no connection ceiling, no queuing.
+      every request as interleaved frames on a single connection - no connection ceiling, no queuing.
     </p>
 
     <label class="slider-field">

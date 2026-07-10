@@ -9,7 +9,7 @@ const METHOD_PRESERVING_CODES = new Set([307, 308]);
 
 function hop1StatusInfo(code: number) {
   const info = getStatusInfo(code);
-  // Only a 3xx makes sense as the first hop of a redirect chain — fall back to 302.
+  // Only a 3xx makes sense as the first hop of a redirect chain - fall back to 302.
   return info.class === '3xx' ? info : getStatusInfo(302);
 }
 
@@ -48,7 +48,7 @@ function build(req: RequestConfig, server: ServerConfig): SimEvent[] {
     phase: 'processing',
     from: 'server',
     label: 'Server processing',
-    detail: 'The server decides the shopper needs to be sent elsewhere — e.g. to the hosted payment page — and starts a session for them.',
+    detail: 'The server decides the shopper needs to be sent elsewhere - e.g. to the hosted payment page - and starts a session for them.',
     observableViaFetch: false,
     durationMs: 500,
   });
@@ -89,8 +89,8 @@ function build(req: RequestConfig, server: ServerConfig): SimEvent[] {
     to: 'server',
     label: `${hop2Req.method} ${hop2Req.path}`,
     detail: preserveMethod
-      ? `${status.code} preserves the method and body — the browser re-issues the SAME ${req.method} to Location, now carrying the session cookie back.`
-      : `${status.code} follows the classic redirect convention — the browser re-issues this as a GET with no body, carrying the session cookie back.`,
+      ? `${status.code} preserves the method and body - the browser re-issues the SAME ${req.method} to Location, now carrying the session cookie back.`
+      : `${status.code} follows the classic redirect convention - the browser re-issues this as a GET with no body, carrying the session cookie back.`,
     observableViaFetch: false,
     durationMs: 400,
     wire: hop2RequestWire,

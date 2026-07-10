@@ -6,7 +6,7 @@ export type Phase =
   | 'processing'     // server-side work (no packet)
   | 'http-response'  // server sends response
   | 'connection'     // keep-alive / close
-  | 'failure';       // connection-level failure (refused, TLS error, timeout) — terminal
+  | 'failure';       // connection-level failure (refused, TLS error, timeout) - terminal
 
 // The parties that can appear on the sequence diagram. Every scenario uses at least
 // 'client' (the shopper's browser) and 'server' (the primary web server it's talking
@@ -19,7 +19,7 @@ export type FailureMode = 'none' | 'refused' | 'tls-error' | 'timeout';
 export interface HeaderLine {
   name: string;
   value: string;
-  auto?: boolean;    // computed (Host, Content-Length, Content-Type) — mark visually
+  auto?: boolean;    // computed (Host, Content-Length, Content-Type) - mark visually
 }
 
 export interface WireMessage {

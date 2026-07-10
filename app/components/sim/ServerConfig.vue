@@ -7,7 +7,7 @@ import type { FailureMode } from '../../../engine/types';
 const store = useSimulatorStore();
 const allClasses: StatusClass[] = ['1xx', '2xx', '3xx', '4xx', '5xx'];
 
-// The redirect-chain scenario only makes sense starting from a 3xx — narrow the
+// The redirect-chain scenario only makes sense starting from a 3xx - narrow the
 // picker so it doubles as "which redirect hop behavior do you want to see."
 const visibleClasses = computed(() => (store.scenarioId === 'redirect-chain' ? (['3xx'] as StatusClass[]) : allClasses));
 
@@ -47,7 +47,7 @@ function onFailureModeChange(event: Event) {
       </select>
     </label>
     <p v-if="store.serverConfig.failureMode && store.serverConfig.failureMode !== 'none'" class="failure-hint">
-      The sequence will stop at the point of failure — the status code below won't be reached.
+      The sequence will stop at the point of failure - the status code below won't be reached.
     </p>
 
     <div v-for="group in grouped" :key="group.class" class="status-group">

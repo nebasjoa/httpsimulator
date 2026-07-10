@@ -20,7 +20,7 @@ export const headerCatalog: HeaderInfo[] = [
   },
   {
     name: 'Content-Length',
-    summary: 'The body size in bytes (not characters — UTF-8 multi-byte characters count as more than one).',
+    summary: 'The body size in bytes (not characters - UTF-8 multi-byte characters count as more than one).',
     example: 'Content-Length: 47',
     context: 'A mismatched Content-Length on a payment POST will hang or truncate the request.',
   },

@@ -1,4 +1,4 @@
-// Pure, illustrative model of HTTP/1.1 vs HTTP/2 framing — not tied to the playback
+// Pure, illustrative model of HTTP/1.1 vs HTTP/2 framing - not tied to the playback
 // engine or any scenario. Shows why HTTP/1.1 needs multiple TCP connections to avoid
 // head-of-line blocking, while HTTP/2 multiplexes many requests as interleaved frames
 // on a single connection.

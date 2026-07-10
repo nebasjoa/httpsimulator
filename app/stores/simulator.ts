@@ -27,7 +27,7 @@ export interface WirePair {
 }
 
 const RECONSTRUCTED_NOTE =
-  'Reconstructed — fetch cannot observe this. The browser deliberately hides it from JavaScript.';
+  'Reconstructed - fetch cannot observe this. The browser deliberately hides it from JavaScript.';
 
 export const useSimulatorStore = defineStore('simulator', {
   state: () => ({
@@ -50,7 +50,7 @@ export const useSimulatorStore = defineStore('simulator', {
     scenario: (state) => getScenario(state.scenarioId),
 
     // Pairs each http-request with the http-response that follows it. A scenario can
-    // produce several pairs (CORS preflight, redirect-chain hops, conditional refetch) —
+    // produce several pairs (CORS preflight, redirect-chain hops, conditional refetch) -
     // panels are only numbered when there's more than one.
     wirePairs: (state): WirePair[] => {
       const pairs: WirePair[] = [];
@@ -177,7 +177,7 @@ export const useSimulatorStore = defineStore('simulator', {
           from: 'client',
           to: 'server',
           label: `${req.method} ${req.path}`,
-          detail: `${RECONSTRUCTED_NOTE} This wire view is our best guess at what was sent — the browser controls the exact header order and casing.`,
+          detail: `${RECONSTRUCTED_NOTE} This wire view is our best guess at what was sent - the browser controls the exact header order and casing.`,
           observableViaFetch: false,
           durationMs: 0,
           wire: requestWire,
@@ -203,7 +203,7 @@ export const useSimulatorStore = defineStore('simulator', {
             to: 'client',
             label: 'Opaque redirect',
             detail:
-              'The server returned a 3xx redirect. With redirect: "manual", the Fetch API deliberately hides the status, Location header, and body from JavaScript — you only learn that a redirect happened. This is the browser drawing the exact abstraction boundary this app teaches.',
+              'The server returned a 3xx redirect. With redirect: "manual", the Fetch API deliberately hides the status, Location header, and body from JavaScript - you only learn that a redirect happened. This is the browser drawing the exact abstraction boundary this app teaches.',
             observableViaFetch: false,
             durationMs: 0,
           });
@@ -229,7 +229,7 @@ export const useSimulatorStore = defineStore('simulator', {
             to: 'client',
             label: startLine,
             detail:
-              'This is the real response the browser received — status, headers, and body are all directly observable via fetch.',
+              'This is the real response the browser received - status, headers, and body are all directly observable via fetch.',
             observableViaFetch: true,
             durationMs: 0,
             wire: {

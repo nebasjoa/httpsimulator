@@ -49,7 +49,7 @@ export function buildConnectionSetup(
       from: to,
       to: from,
       label: 'RST (Connection refused)',
-      detail: 'The server actively refused the connection — nothing is listening on this port, or a firewall rejected it. No TLS or HTTP exchange can happen.',
+      detail: 'The server actively refused the connection - nothing is listening on this port, or a firewall rejected it. No TLS or HTTP exchange can happen.',
       observableViaFetch: false,
       durationMs: 250,
     });
@@ -73,7 +73,7 @@ export function buildConnectionSetup(
     from,
     to,
     label: 'ACK',
-    detail: 'The client acknowledges the server\'s SYN. The three-way handshake is complete — the TCP connection is open.',
+    detail: 'The client acknowledges the server\'s SYN. The three-way handshake is complete - the TCP connection is open.',
     observableViaFetch: false,
     durationMs: 150,
   });
@@ -101,7 +101,7 @@ export function buildConnectionSetup(
         from: to,
         to: from,
         label: 'TLS alert: handshake_failure',
-        detail: 'The TLS handshake failed — e.g. the server presented an untrusted/expired certificate, or the client and server share no common cipher suite. The connection is aborted before any HTTP request is sent.',
+        detail: 'The TLS handshake failed - e.g. the server presented an untrusted/expired certificate, or the client and server share no common cipher suite. The connection is aborted before any HTTP request is sent.',
         observableViaFetch: false,
         durationMs: 250,
       });
@@ -130,7 +130,7 @@ export function buildConnectionSetup(
       from,
       to,
       label: 'KeyExchange + Finished',
-      detail: 'The client verifies the certificate, exchanges key material, and both sides derive session keys. TLS is now established — everything from here on is encrypted.',
+      detail: 'The client verifies the certificate, exchanges key material, and both sides derive session keys. TLS is now established - everything from here on is encrypted.',
       observableViaFetch: false,
       durationMs: 250,
     });
@@ -234,7 +234,7 @@ export function buildConditionalRefetch(req: RequestConfig): SimEvent[] {
       from: 'server',
       to: 'client',
       label: responseWire.startLine,
-      detail: 'The ETag still matches, so the server replies 304 Not Modified with no body — the client\'s cached copy is still good.',
+      detail: 'The ETag still matches, so the server replies 304 Not Modified with no body - the client\'s cached copy is still good.',
       observableViaFetch: true,
       durationMs: 300,
       wire: responseWire,
@@ -243,7 +243,7 @@ export function buildConditionalRefetch(req: RequestConfig): SimEvent[] {
 }
 
 // Full pipeline shared by simple-request and form-post: connection setup, optional CORS
-// preflight, the request/response, optional conditional refetch, then keep-alive —
+// preflight, the request/response, optional conditional refetch, then keep-alive -
 // short-circuiting into a terminal failure event when server.failureMode is set.
 export function assembleExchange(req: RequestConfig, server: ServerConfig): SimEvent[] {
   const failureMode = server.failureMode ?? 'none';
@@ -296,7 +296,7 @@ export function assembleExchange(req: RequestConfig, server: ServerConfig): SimE
     phase: 'processing',
     from: 'server',
     label: 'Server processing',
-    detail: 'The server handles the request — routing, business logic, maybe a database call — before it has a response ready.',
+    detail: 'The server handles the request - routing, business logic, maybe a database call - before it has a response ready.',
     observableViaFetch: false,
     durationMs: 600,
   });

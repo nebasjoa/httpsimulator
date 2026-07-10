@@ -88,14 +88,14 @@ export const statusCatalog: StatusInfo[] = [
   {
     code: 303, reason: 'See Other', class: '3xx',
     responseHeaders: [{ name: 'Location', value: 'https://pay.computop.com/paymentpage/result' }],
-    summary: 'Redirect after processing — always follow with GET, regardless of the original method.',
+    summary: 'Redirect after processing - always follow with GET, regardless of the original method.',
     paymentsExample: 'After processing a payment POST, the gateway sends the browser to a result page.',
     clientAction: 'Follow `Location` with GET.',
   },
   {
     code: 304, reason: 'Not Modified', class: '3xx',
     responseHeaders: [{ name: 'ETag', value: '"33a64df551"' }],
-    summary: 'Conditional GET — the cached copy is still valid, so no body is sent.',
+    summary: 'Conditional GET - the cached copy is still valid, so no body is sent.',
     paymentsExample: 'The merchant re-fetches a rarely-changing config resource using `If-None-Match`.',
     clientAction: 'Use the cached response body; no new body is provided.',
   },
@@ -174,7 +174,7 @@ export const statusCatalog: StatusInfo[] = [
   {
     code: 409, reason: 'Conflict', class: '4xx',
     responseHeaders: [],
-    summary: 'Request conflicts with current state — classic idempotency collision.',
+    summary: 'Request conflicts with current state - classic idempotency collision.',
     paymentsExample: 'Same idempotency key / TransID replayed for a payment already created.',
     clientAction: 'Do NOT blindly retry; reconcile against the existing resource.',
   },

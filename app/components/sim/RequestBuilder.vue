@@ -82,7 +82,19 @@ const conditionalRefetch = computed({
 
     <template v-if="hasBodyMethod">
       <label class="field">
-        <span class="field-label">Content-Type</span>
+        <span class="field-label">
+          Content-Type
+          <span class="info-icon-wrap">
+            <button type="button" class="info-icon" tabindex="0" aria-label="What is Content-Type?">i</button>
+            <span class="tooltip" role="tooltip">
+              Tells the server what kind of data the body contains, so it knows how to parse it. Common values:
+              <code>application/x-www-form-urlencoded</code> (HTML form fields, key=value pairs),
+              <code>application/json</code> (JSON payload),
+              <code>multipart/form-data</code> (file uploads),
+              <code>text/plain</code> (plain text).
+            </span>
+          </span>
+        </span>
         <input type="text" v-model="contentType" placeholder="application/x-www-form-urlencoded" />
       </label>
       <label class="field">
@@ -91,15 +103,36 @@ const conditionalRefetch = computed({
       </label>
     </template>
 
-    <label class="checkbox">
-      <input type="checkbox" :checked="store.authEnabled" @change="onAuthToggle" />
-      Add Authorization header
-    </label>
+    <div class="checkbox-row">
+      <label class="checkbox">
+        <input type="checkbox" :checked="store.authEnabled" @change="onAuthToggle" />
+        Add Authorization header
+      </label>
+      <span class="info-icon-wrap">
+        <button type="button" class="info-icon" tabindex="0" aria-label="What does Add Authorization header do?">i</button>
+        <span class="tooltip" role="tooltip">
+          Injects an <code>Authorization: Basic ...</code> header carrying credentials with the request. Servers
+          that require auth check this header and respond <code>401 Unauthorized</code> (with a
+          <code>WWW-Authenticate</code> challenge) if it is missing or invalid.
+        </span>
+      </span>
+    </div>
 
-    <label class="checkbox">
-      <input type="checkbox" v-model="crossOrigin" />
-      Cross-origin request (adds CORS preflight)
-    </label>
+    <div class="checkbox-row">
+      <label class="checkbox">
+        <input type="checkbox" v-model="crossOrigin" />
+        Cross-origin request (adds CORS preflight)
+      </label>
+      <span class="info-icon-wrap">
+        <button type="button" class="info-icon" tabindex="0" aria-label="What does Cross-origin request do?">i</button>
+        <span class="tooltip" role="tooltip">
+          Simulates calling the endpoint from a different origin (e.g. a merchant site calling the gateway's API
+          directly from the browser). Before the real request, the browser sends an <code>OPTIONS</code> preflight
+          with <code>Access-Control-Request-Method</code>, and the server must answer with matching
+          <code>Access-Control-Allow-*</code> headers or the browser blocks the response.
+        </span>
+      </span>
+    </div>
 
     <label class="checkbox" v-if="isGet">
       <input type="checkbox" v-model="conditionalRefetch" />
@@ -131,6 +164,63 @@ const conditionalRefetch = computed({
 }
 .field-label {
   color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.info-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.info-icon {
+  width: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  background: none;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-style: italic;
+  font-family: serif;
+  padding: 0;
+  cursor: help;
+}
+.info-icon:hover,
+.info-icon:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.tooltip {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: max-content;
+  max-width: 18rem;
+  background: var(--surface-3);
+  color: inherit;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.75rem;
+  font-weight: normal;
+  line-height: 1.35;
+  white-space: normal;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+.tooltip code {
+  font-family: var(--font-mono);
+}
+.info-icon-wrap:hover .tooltip,
+.info-icon-wrap:focus-within .tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 .field-row {
   display: flex;
@@ -142,6 +232,11 @@ const conditionalRefetch = computed({
   align-items: center;
   gap: 0.4rem;
   font-size: 0.85rem;
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 input[type='text'],
 select,
