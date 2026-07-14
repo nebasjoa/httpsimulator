@@ -19,9 +19,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-shell">
-    <header class="app-header">
-      <h1>HTTP Simulator</h1>
+  <div class="http-page">
+    <div class="sub-header">
       <div class="mode-toggle" role="group" aria-label="Data source mode">
         <button type="button" :class="{ active: store.mode === 'simulated' }" @click="store.setMode('simulated')">
           Simulated
@@ -31,7 +30,7 @@ onMounted(() => {
         </button>
       </div>
       <Legend />
-    </header>
+    </div>
 
     <p v-if="store.mode === 'real' && store.realLoading" class="real-status">Fetching /api/echo…</p>
     <p v-if="store.mode === 'real' && store.realError" class="real-status error">{{ store.realError }}</p>
@@ -64,23 +63,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.app-shell {
+.http-page {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1rem;
-  max-width: 1400px;
-  margin: 0 auto;
 }
-.app-header {
+.sub-header {
   display: flex;
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-}
-.app-header h1 {
-  font-size: 1.25rem;
-  margin: 0;
 }
 .mode-toggle {
   display: inline-flex;

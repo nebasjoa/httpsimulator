@@ -1,0 +1,77 @@
+<script setup lang="ts">
+import { useGitSimulatorStore } from '../../stores/gitSimulator';
+
+const store = useGitSimulatorStore();
+</script>
+
+<template>
+  <ol class="timeline" aria-label="Command history">
+    <li v-for="(step, index) in store.history" :key="step.id">
+      <button
+        type="button"
+        class="marker"
+        :class="{ active: index === store.cursor, past: index < store.cursor, destructive: step.destructive, error: step.error, edit: step.kind === 'edit' }"
+        :aria-current="index === store.cursor ? 'step' : undefined"
+        :title="step.input"
+        @click="store.jumpTo(index)"
+      >
+        {{ index + 1 }}
+      </button>
+    </li>
+  </ol>
+</template>
+
+<style scoped>
+.timeline {
+  list-style: none;
+  display: flex;
+  gap: 0.35rem;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  flex-wrap: wrap;
+}
+.marker {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  opacity: 0.5;
+}
+.marker.past {
+  opacity: 0.75;
+}
+.marker.edit {
+  border-style: dashed;
+}
+.marker.active {
+  opacity: 1;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+  font-weight: 700;
+}
+.marker.destructive {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.marker.destructive.active {
+  background: var(--amber);
+  color: var(--surface);
+}
+.marker.error {
+  border-color: var(--red);
+  color: var(--red);
+}
+.marker.error.active {
+  background: var(--red);
+  color: var(--surface);
+}
+.marker:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+</style>

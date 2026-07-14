@@ -1,10 +1,19 @@
 import { onScopeDispose, watch } from 'vue';
-import { useSimulatorStore } from '../stores/simulator';
 
-// Ties store.playing to a timer that advances the cursor using each event's
-// durationMs / speedMultiplier, stopping automatically at the end of the run.
-export function usePlayback() {
-  const store = useSimulatorStore();
+interface PlaybackStore {
+  cursor: number;
+  playing: boolean;
+  speedMultiplier: number;
+  isAtEnd: boolean;
+  step(delta: number): void;
+  pause(): void;
+}
+
+// Ties store.playing to a timer that advances the cursor using the active item's
+// durationMs / speedMultiplier, stopping automatically at the end of the run. Shared by
+// both simulators - `getActive` tells it where to find "the current item" since the HTTP
+// store calls its list `events` and the git store calls its list `history`.
+export function usePlayback<T extends PlaybackStore>(store: T, getActive: (store: T) => { durationMs: number } | undefined) {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   function clear() {
@@ -16,9 +25,9 @@ export function usePlayback() {
 
   function scheduleNext() {
     clear();
-    const event = store.events[store.cursor];
-    if (!event) return;
-    const delay = Math.max(50, event.durationMs / store.speedMultiplier);
+    const active = getActive(store);
+    if (!active) return;
+    const delay = Math.max(50, active.durationMs / store.speedMultiplier);
     timer = setTimeout(() => {
       if (!store.playing) return;
       if (store.isAtEnd) {

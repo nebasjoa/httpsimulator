@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import { useSimulatorStore } from '../../stores/simulator';
+import { useGitSimulatorStore } from '../../stores/gitSimulator';
 import { usePlayback } from '../../composables/usePlayback';
 
-const store = useSimulatorStore();
-usePlayback(store, (s) => s.events[s.cursor]);
+const store = useGitSimulatorStore();
+usePlayback(store, (s) => s.history[s.cursor]);
 
 const speeds = [0.5, 1, 2, 4];
 
@@ -51,7 +51,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
       </select>
     </label>
 
-    <span class="position" v-if="store.events.length">{{ store.cursor + 1 }} / {{ store.events.length }}</span>
+    <span class="position" v-if="store.history.length">{{ store.cursor + 1 }} / {{ store.history.length }}</span>
   </div>
 </template>
 
