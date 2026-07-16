@@ -7,6 +7,7 @@ const router = useRouter();
 const titles: Record<string, string> = {
   '/': 'HTTP Simulator',
   '/git': 'Git Simulator',
+  '/rest-api': 'REST API Simulator',
 };
 
 const title = computed(() => titles[route.path] ?? 'Simulator');
@@ -23,6 +24,7 @@ function onChange(event: Event) {
       <select class="simulator-select" :value="route.path" aria-label="Choose simulator" @change="onChange">
         <option value="/">HTTP Simulator</option>
         <option value="/git">Git Simulator</option>
+        <option value="/rest-api">REST API Simulator</option>
       </select>
     </header>
     <slot />
