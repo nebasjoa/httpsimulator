@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { useSimulatorStore } from '../../stores/simulator';
 import { buildRequestWire } from '../../../engine/wire';
-import type { RequestConfig } from '../../../engine/types';
+import type { RequestConfig, TlsTermination } from '../../../engine/types';
 
 const store = useSimulatorStore();
 
@@ -46,6 +46,16 @@ const crossOrigin = computed({
   get: () => !!store.requestConfig.crossOrigin,
   set: (value: boolean) => store.updateRequestConfig({ crossOrigin: value }),
 });
+const mtls = computed({
+  get: () => !!store.requestConfig.mtls,
+  set: (value: boolean) => store.updateRequestConfig({ mtls: value }),
+});
+const tlsTermination = computed({
+  get: () => store.requestConfig.tlsTermination ?? 'origin',
+  set: (value: TlsTermination) => store.updateRequestConfig({ tlsTermination: value }),
+});
+const isMtlsScenario = computed(() => store.scenarioId === 'mtls-s2s');
+
 const conditionalRefetch = computed({
   get: () => !!store.requestConfig.conditionalRefetch,
   set: (value: boolean) => store.updateRequestConfig({ conditionalRefetch: value }),
@@ -133,6 +143,30 @@ const conditionalRefetch = computed({
         </span>
       </span>
     </div>
+
+    <div class="checkbox-row">
+      <label class="checkbox">
+        <input type="checkbox" v-model="mtls" :disabled="!https" />
+        Mutual TLS (client certificate)
+      </label>
+      <span class="info-icon-wrap">
+        <button type="button" class="info-icon" tabindex="0" aria-label="What does Mutual TLS do?">i</button>
+        <span class="tooltip" role="tooltip">
+          In normal TLS only the server proves its identity. With mTLS the server also sends a
+          <code>CertificateRequest</code>, and the client answers with its own certificate plus a
+          <code>CertificateVerify</code> signature made with its private key. The caller is authenticated before any
+          HTTP is sent. Requires HTTPS.
+        </span>
+      </span>
+    </div>
+
+    <label class="field" v-if="isMtlsScenario && mtls">
+      <span class="field-label">Where TLS ends</span>
+      <select v-model="tlsTermination">
+        <option value="origin">On the API server itself</option>
+        <option value="edge-proxy">On an edge proxy (identity forwarded in a header)</option>
+      </select>
+    </label>
 
     <label class="checkbox" v-if="isGet">
       <input type="checkbox" v-model="conditionalRefetch" />

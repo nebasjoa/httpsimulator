@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import type { HeaderLine, RequestConfig, ServerConfig, SimEvent } from '../../engine/types';
+import type { HeaderLine, Party, RequestConfig, ServerConfig, SimEvent } from '../../engine/types';
+import { isMtlsFailureMode } from '../../engine/types';
 import { getScenario, DEFAULT_SCENARIO_ID } from '../../engine/scenarios';
 import { buildRequestWire } from '../../engine/wire';
 import { getStatusInfo } from '../../engine/statusCatalog';
@@ -17,8 +18,17 @@ function defaultRequestConfig(): RequestConfig {
     extraHeaders: [],
     crossOrigin: false,
     conditionalRefetch: false,
+    mtls: false,
   };
 }
+
+const DEFAULT_PARTY_LABELS: Record<Party, string> = {
+  client: 'Client',
+  proxy: 'Proxy',
+  server: 'Server',
+  gateway: 'Gateway',
+  issuer: 'Issuer',
+};
 
 export interface WirePair {
   label: string;
@@ -48,24 +58,39 @@ export const useSimulatorStore = defineStore('simulator', {
     activeEvent: (state) => state.events[state.cursor],
     isAtEnd: (state) => state.cursor >= state.events.length - 1,
     scenario: (state) => getScenario(state.scenarioId),
+    partyLabels: (state): Record<Party, string> => ({
+      ...DEFAULT_PARTY_LABELS,
+      ...getScenario(state.scenarioId).partyLabels,
+    }),
 
     // Pairs each http-request with the http-response that follows it. A scenario can
     // produce several pairs (CORS preflight, redirect-chain hops, conditional refetch) -
     // panels are only numbered when there's more than one.
-    wirePairs: (state): WirePair[] => {
+    // A response answers the most recent request still waiting for one, so nested hops
+    // (client → proxy → server, or the payment-flow S2S call made mid-checkout) pair up
+    // correctly instead of the inner response overwriting the outer one.
+    wirePairs(state): WirePair[] {
       const pairs: WirePair[] = [];
-      let current: WirePair | null = null;
+      const open: WirePair[] = [];
       for (const event of state.events) {
         if (event.wire?.kind === 'http-request') {
-          current = { label: '', requestEvent: event };
-          pairs.push(current);
-        } else if (event.wire?.kind === 'http-response' && current) {
-          current.responseEvent = event;
+          const pair: WirePair = { label: '', requestEvent: event };
+          pairs.push(pair);
+          open.push(pair);
+        } else if (event.wire?.kind === 'http-response') {
+          const pair = open.pop();
+          if (pair) pair.responseEvent = event;
         }
       }
       if (pairs.length > 1) {
+        const labels = this.partyLabels;
+        const hop = (p: WirePair) => `${p.requestEvent?.from}>${p.requestEvent?.to}`;
+        const multiHop = new Set(pairs.map(hop)).size > 1;
         pairs.forEach((p, i) => {
-          p.label = `Exchange ${i + 1}`;
+          const req = p.requestEvent;
+          p.label = multiHop && req?.to
+            ? `Exchange ${i + 1}: ${labels[req.from]} → ${labels[req.to]}`
+            : `Exchange ${i + 1}`;
         });
       }
       return pairs;
@@ -88,6 +113,11 @@ export const useSimulatorStore = defineStore('simulator', {
 
     updateRequestConfig(patch: Partial<RequestConfig>) {
       this.requestConfig = { ...this.requestConfig, ...patch };
+      // An mTLS failure mode means nothing once mTLS (or HTTPS) is off - fall back to none.
+      const mtlsActive = this.requestConfig.https && !!this.requestConfig.mtls;
+      if (!mtlsActive && isMtlsFailureMode(this.serverConfig.failureMode)) {
+        this.serverConfig = { ...this.serverConfig, failureMode: 'none' };
+      }
       this.rebuild();
     },
 
@@ -163,8 +193,10 @@ export const useSimulatorStore = defineStore('simulator', {
             phase: 'tls',
             from: 'client',
             to: 'server',
-            label: 'TLS handshake',
-            detail: RECONSTRUCTED_NOTE,
+            label: req.mtls ? 'TLS handshake (mTLS requested)' : 'TLS handshake',
+            detail: req.mtls
+              ? `${RECONSTRUCTED_NOTE} fetch also has no way to present a client certificate: the browser and OS choose one (often by prompting the user), and JavaScript never learns which. The local echo endpoint does not request one, so no mTLS actually happens here - switch to Simulated mode to see the handshake.`
+              : RECONSTRUCTED_NOTE,
             observableViaFetch: false,
             durationMs: 0,
           });

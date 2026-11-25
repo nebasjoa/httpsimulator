@@ -1,15 +1,7 @@
 <script setup lang="ts">
 import { useSimulatorStore } from '../../stores/simulator';
-import type { Party } from '../../../engine/types';
 
 const store = useSimulatorStore();
-
-const PARTY_LABELS: Record<Party, string> = {
-  client: 'Client',
-  server: 'Server',
-  gateway: 'Gateway',
-  issuer: 'Issuer',
-};
 </script>
 
 <template>
@@ -20,7 +12,7 @@ const PARTY_LABELS: Record<Party, string> = {
         <span class="phase-badge" :class="store.activeEvent.phase">{{ store.activeEvent.phase }}</span>
         <strong>{{ store.activeEvent.label }}</strong>
         <span class="party-path">
-          {{ PARTY_LABELS[store.activeEvent.from] }}<template v-if="store.activeEvent.to"> → {{ PARTY_LABELS[store.activeEvent.to] }}</template>
+          {{ store.partyLabels[store.activeEvent.from] }}<template v-if="store.activeEvent.to"> → {{ store.partyLabels[store.activeEvent.to] }}</template>
         </span>
       </div>
       <p class="detail-text">{{ store.activeEvent.detail }}</p>

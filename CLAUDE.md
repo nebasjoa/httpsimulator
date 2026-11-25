@@ -135,6 +135,7 @@ Each file exports one `Scenario`. `index.ts` registers them. MVP ships the first
 | `form-post` | Form POST (`x-www-form-urlencoded`) | The merchant's `.aspx` POST shape. |
 | `redirect-chain` | Redirect chain | Show 301/302/303 vs 307/308 method-preservation differences across hops. |
 | `payment-flow` | Computop end-to-end | Phase 3 — see below. |
+| `mtls-s2s` | Mutual TLS (server-to-server) | TLS 1.3 client-cert handshake (`buildMtlsHandshake` in `shared.ts`), `mtls-*` failure modes ending in TLS alerts, optional edge-proxy termination forwarding identity via `X-Forwarded-Client-Cert`. The `mtls` request flag works in every scenario. |
 
 **MVP `simple-request` must emit, in order:** `dns` → `tcp`(SYN) → `tcp`(SYN-ACK) → `tcp`(ACK) → *(if https)* `tls`(ClientHello) → `tls`(ServerHello+Certificate) → `tls`(KeyExchange+Finished) → `http-request` → `processing` → `http-response` → `connection`(keep-alive). Mark `dns`, `tcp`, `tls` events `observableViaFetch: false`.
 

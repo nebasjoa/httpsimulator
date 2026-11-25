@@ -117,6 +117,18 @@ export const headerCatalog: HeaderInfo[] = [
     example: 'Access-Control-Request-Method: POST',
     context: 'Sent by the browser on the OPTIONS preflight before a cross-origin payment POST.',
   },
+  {
+    name: 'X-Forwarded-Client-Cert',
+    summary: 'Added by a TLS-terminating proxy (Envoy and others) to tell the app which client certificate it verified. Not a standard - RFC 9440 defines the equivalent Client-Cert header.',
+    example: 'X-Forwarded-Client-Cert: Hash=9f2c51d07be3a8e41a;Subject="CN=merchant-284500,O=Example Shop GmbH"',
+    context: 'Only trustworthy if the proxy strips any incoming copy and the app is unreachable except through the proxy - otherwise a caller can forge a merchant identity.',
+  },
+  {
+    name: 'X-Forwarded-For',
+    summary: 'The original client IP address, added by proxies because the app only sees the proxy\'s IP on the TCP connection.',
+    example: 'X-Forwarded-For: 203.0.113.24',
+    context: 'Gateways use it for merchant IP allow-lists and fraud checks - and, like any header, only trust it from their own proxies.',
+  },
 ];
 
 const headerByName = new Map(headerCatalog.map((h) => [h.name.toLowerCase(), h]));

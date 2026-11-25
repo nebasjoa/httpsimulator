@@ -1,4 +1,5 @@
 import type { FailureMode, Party, RequestConfig, ServerConfig, SimEvent, WireMessage } from '../types';
+import { isMtlsFailureMode } from '../types';
 import { buildRequestWire, buildResponseWire } from '../wire';
 
 let counter = 0;
@@ -10,7 +11,8 @@ export function nextId(prefix: string): string {
 export const CONDITIONAL_ETAG = '"33a64df551"';
 
 // dns → SYN → [refused ⇒ stop] → SYN-ACK → ACK → [https] ClientHello → [tls-error ⇒ stop] →
-// ServerHello+Certificate → KeyExchange+Finished. Parameterized by party pair so payment-flow
+// ServerHello+Certificate → KeyExchange+Finished. With req.mtls the TLS part is replaced by
+// the TLS 1.3 mutual-auth handshake from buildMtlsHandshake. Parameterized by party pair so payment-flow
 // can reuse it for its opening (client→server) leg with full failureMode support.
 export function buildConnectionSetup(
   req: RequestConfig,
@@ -78,6 +80,11 @@ export function buildConnectionSetup(
     durationMs: 150,
   });
 
+  if (req.https && req.mtls) {
+    events.push(...buildMtlsHandshake(req, failureMode, from, to));
+    return events;
+  }
+
   if (req.https) {
     events.push({
       id: nextId('tls'),
@@ -134,6 +141,211 @@ export function buildConnectionSetup(
       observableViaFetch: false,
       durationMs: 250,
     });
+  }
+
+  return events;
+}
+
+export const CLIENT_CA = 'CN=Computop Client CA G2, O=Computop';
+export const CLIENT_CERT_SUBJECT = 'CN=merchant-284500, O=Example Shop GmbH';
+
+// The TLS 1.3 handshake with client authentication (RFC 8446 §4.3.2 / §4.4.2). Everything
+// after ServerHello is encrypted with handshake keys, shown in {braces} like the RFC does.
+// The mtls-* failure modes end it with the TLS alert a real server would send.
+export function buildMtlsHandshake(
+  req: RequestConfig,
+  failureMode: FailureMode,
+  from: Party,
+  to: Party
+): SimEvent[] {
+  const events: SimEvent[] = [];
+
+  events.push({
+    id: nextId('tls'),
+    phase: 'tls',
+    from,
+    to,
+    label: 'ClientHello',
+    detail: 'The client starts the TLS handshake: supported versions, cipher suites, and a key share so keys can be agreed in a single round trip. Nothing here says who the client is yet.',
+    observableViaFetch: false,
+    durationMs: 200,
+    meta: {
+      'TLS versions offered': 'TLS 1.3',
+      'Cipher suites offered': 'TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256',
+      'Key share': 'x25519',
+      'SNI': req.host,
+    },
+  });
+
+  if (failureMode === 'tls-error') {
+    events.push({
+      id: nextId('failure'),
+      phase: 'failure',
+      from: to,
+      to: from,
+      label: 'TLS alert: handshake_failure',
+      detail: 'The TLS handshake failed before client authentication even started - e.g. client and server share no cipher suite. The connection is aborted before any HTTP request is sent.',
+      observableViaFetch: false,
+      durationMs: 250,
+    });
+    return events;
+  }
+
+  events.push({
+    id: nextId('tls'),
+    phase: 'tls',
+    from: to,
+    to: from,
+    label: 'ServerHello',
+    detail: 'The server picks the cipher suite and sends its own key share. Both sides now derive handshake keys, so every handshake message after this one is encrypted - including both certificates.',
+    observableViaFetch: false,
+    durationMs: 200,
+    meta: {
+      'Version chosen': 'TLS 1.3',
+      'Cipher suite chosen': 'TLS_AES_128_GCM_SHA256',
+      'Key share': 'x25519',
+    },
+  });
+
+  events.push({
+    id: nextId('tls'),
+    phase: 'tls',
+    from: to,
+    to: from,
+    label: '{EncryptedExtensions, CertificateRequest}',
+    detail: 'This is what makes it mutual TLS: the server sends CertificateRequest, asking the client to prove who it is. It lists the signature algorithms it accepts and the CAs it trusts, so the client can pick a matching certificate.',
+    observableViaFetch: false,
+    durationMs: 250,
+    meta: {
+      'Acceptable CAs': CLIENT_CA,
+      'Signature algorithms': 'ecdsa_secp256r1_sha256, rsa_pss_rsae_sha256',
+    },
+  });
+
+  events.push({
+    id: nextId('tls'),
+    phase: 'tls',
+    from: to,
+    to: from,
+    label: '{Certificate, CertificateVerify, Finished}',
+    detail: 'The server authenticates itself exactly as in normal TLS: its certificate, a signature over the handshake so far made with its private key, and a Finished MAC. The client checks the chain and that the certificate name matches the host it asked for.',
+    observableViaFetch: false,
+    durationMs: 250,
+    meta: {
+      'Server cert subject': `CN=${req.host}`,
+      'Server cert issuer': 'CN=DigiCert TLS RSA SHA256 2020 CA1',
+      'Server cert expires': '2027-03-01',
+    },
+  });
+
+  if (failureMode === 'mtls-no-cert') {
+    events.push({
+      id: nextId('tls'),
+      phase: 'tls',
+      from,
+      to,
+      label: '{Certificate} (empty)',
+      detail: 'The client has no certificate from any of the requested CAs, so it sends an empty Certificate message. TLS allows this - the server decides whether a certificate is required.',
+      observableViaFetch: false,
+      durationMs: 250,
+      meta: { 'Certificates sent': 'none' },
+    });
+  } else {
+    events.push({
+      id: nextId('tls'),
+      phase: 'tls',
+      from,
+      to,
+      label: '{Certificate}',
+      detail: 'The client sends its own certificate chain. A certificate is public information, so sending it proves nothing by itself. The proof comes in the next message.',
+      observableViaFetch: false,
+      durationMs: 250,
+      meta: {
+        'Client cert subject': CLIENT_CERT_SUBJECT,
+        'Client cert issuer': failureMode === 'mtls-unknown-ca' ? 'CN=Example Shop Internal CA' : CLIENT_CA,
+        'Valid until': failureMode === 'mtls-expired' ? '2026-10-31 (expired)' : '2027-06-30',
+        'Extended key usage': 'clientAuth',
+      },
+    });
+    events.push({
+      id: nextId('tls'),
+      phase: 'tls',
+      from,
+      to,
+      label: '{CertificateVerify}',
+      detail: 'The client signs a hash of the whole handshake so far with the private key that belongs to its certificate. Only the key holder can produce this signature, and because it covers this handshake it cannot be replayed on another connection. This is the actual proof of identity.',
+      observableViaFetch: false,
+      durationMs: 250,
+      meta: {
+        'Signature algorithm': 'ecdsa_secp256r1_sha256',
+        'Signed data': 'transcript hash (ClientHello … client Certificate)',
+      },
+    });
+  }
+
+  events.push({
+    id: nextId('tls'),
+    phase: 'tls',
+    from,
+    to,
+    label: '{Finished}',
+    detail: 'The client sends its Finished MAC. From the client\'s side the handshake is now complete - in TLS 1.3 it may start sending application data right away, before the server has accepted its certificate.',
+    observableViaFetch: false,
+    durationMs: 200,
+  });
+
+  const accepted = !isMtlsFailureMode(failureMode);
+  const verifyMeta: Record<string, string> =
+    failureMode === 'mtls-no-cert'
+      ? { 'Certificate present': '✗ none sent - this endpoint requires one' }
+      : {
+          'Chain to trusted CA': failureMode === 'mtls-unknown-ca' ? '✗ issuer not in trust store' : `✓ ${CLIENT_CA}`,
+          'Validity period': failureMode === 'mtls-expired' ? '✗ expired 2026-10-31' : '✓ valid until 2027-06-30',
+          'Key usage': '✓ clientAuth',
+          'CertificateVerify signature': '✓ matches the certificate\'s public key',
+        };
+
+  events.push({
+    id: nextId('tls'),
+    phase: 'tls',
+    from: to,
+    label: 'Verify client certificate',
+    detail: accepted
+      ? 'The server checks the client certificate the way the client checked the server\'s: the chain ends at a CA it trusts, the dates are valid, the key usage allows client auth, and the CertificateVerify signature matches. Both sides are now authenticated - mutual TLS is established.'
+      : 'The server checks the client certificate the way the client checked the server\'s - and one of the checks fails.',
+    observableViaFetch: false,
+    durationMs: 300,
+    meta: verifyMeta,
+  });
+
+  if (!accepted) {
+    const alerts: Record<string, { label: string; detail: string }> = {
+      'mtls-no-cert': {
+        label: 'TLS alert: certificate_required',
+        detail: 'Alert 116 (TLS 1.3). The server requires a client certificate and got none. This is a TLS failure, not an HTTP 401 or 403 - the request never reaches the application, so there is no status code to read.',
+      },
+      'mtls-unknown-ca': {
+        label: 'TLS alert: unknown_ca',
+        detail: 'Alert 48. The certificate chain does not end at any CA in the server\'s trust store - here it was issued by the merchant\'s internal CA instead of the gateway\'s client CA. The fix is a certificate from the right CA, not a retry.',
+      },
+      'mtls-expired': {
+        label: 'TLS alert: certificate_expired',
+        detail: 'Alert 45. The client certificate is past its expiry date. A common production outage: client certificates often sit in a config file nobody watches, and expire silently.',
+      },
+    };
+    const alert = alerts[failureMode];
+    if (alert) {
+      events.push({
+        id: nextId('failure'),
+        phase: 'failure',
+        from: to,
+        to: from,
+        label: alert.label,
+        detail: `${alert.detail} Because the client already sent Finished, many client libraries only notice on their next read and report a vague "connection reset" or "bad certificate" error.`,
+        observableViaFetch: false,
+        durationMs: 250,
+      });
+    }
   }
 
   return events;

@@ -9,13 +9,7 @@ import Timeline from './Timeline.vue';
 const store = useSimulatorStore();
 const packetEls = ref<Record<number, HTMLElement>>({});
 
-const PARTY_ORDER: Party[] = ['client', 'server', 'gateway', 'issuer'];
-const PARTY_LABELS: Record<Party, string> = {
-  client: 'Client',
-  server: 'Server',
-  gateway: 'Gateway',
-  issuer: 'Issuer',
-};
+const PARTY_ORDER: Party[] = ['client', 'proxy', 'server', 'gateway', 'issuer'];
 
 // Only draw a lifeline for parties this scenario actually uses, in a stable canonical order.
 const visibleParties = computed<Party[]>(() => {
@@ -89,7 +83,7 @@ watch(
         :key="party"
         class="lifeline-label"
         :style="{ left: partyPosition(party) + '%', color: `var(--${party}-color)` }"
-      >{{ PARTY_LABELS[party] }}</span>
+      >{{ store.partyLabels[party] }}</span>
     </div>
 
     <div class="event-rows-wrap">

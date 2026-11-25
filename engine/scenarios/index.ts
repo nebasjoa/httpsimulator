@@ -3,12 +3,14 @@ import { simpleRequestScenario } from './simpleRequest';
 import { formPostScenario } from './formPost';
 import { redirectChainScenario } from './redirectChain';
 import { paymentFlowScenario } from './paymentFlow';
+import { mtlsS2sScenario } from './mtlsS2s';
 
 export const scenarios: Scenario[] = [
   simpleRequestScenario,
   formPostScenario,
   redirectChainScenario,
   paymentFlowScenario,
+  mtlsS2sScenario,
 ];
 
 const scenarioById = new Map(scenarios.map((s) => [s.id, s]));

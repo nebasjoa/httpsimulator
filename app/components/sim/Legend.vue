@@ -7,6 +7,7 @@ const classes: StatusClass[] = ['1xx', '2xx', '3xx', '4xx', '5xx'];
 <template>
   <div class="legend" aria-label="Legend">
     <span class="legend-item"><span class="swatch client" /> Client</span>
+    <span class="legend-item"><span class="swatch proxy" /> Proxy</span>
     <span class="legend-item"><span class="swatch server" /> Server</span>
     <span class="legend-item"><span class="swatch gateway" /> Gateway</span>
     <span class="legend-item"><span class="swatch issuer" /> Issuer</span>
@@ -37,6 +38,9 @@ const classes: StatusClass[] = ['1xx', '2xx', '3xx', '4xx', '5xx'];
 }
 .swatch.client {
   background: var(--client-color);
+}
+.swatch.proxy {
+  background: var(--proxy-color);
 }
 .swatch.server {
   background: var(--server-color);

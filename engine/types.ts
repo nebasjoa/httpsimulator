@@ -10,11 +10,29 @@ export type Phase =
 
 // The parties that can appear on the sequence diagram. Every scenario uses at least
 // 'client' (the shopper's browser) and 'server' (the primary web server it's talking
-// to); 'gateway' and 'issuer' only appear in the payment-flow scenario.
-export type Party = 'client' | 'server' | 'gateway' | 'issuer';
+// to); 'gateway' and 'issuer' only appear in the payment-flow scenario; 'proxy' is the
+// TLS-terminating edge proxy in the mtls-s2s scenario.
+export type Party = 'client' | 'proxy' | 'server' | 'gateway' | 'issuer';
 
 // Injectable connection-level failure. 'none' runs the normal flow.
-export type FailureMode = 'none' | 'refused' | 'tls-error' | 'timeout';
+// The 'mtls-*' modes only apply when RequestConfig.mtls is on: the server rejects the
+// client certificate and ends the handshake with the matching TLS alert.
+export type FailureMode =
+  | 'none'
+  | 'refused'
+  | 'tls-error'
+  | 'timeout'
+  | 'mtls-no-cert'      // client has no cert to send → alert certificate_required
+  | 'mtls-unknown-ca'   // client cert issued by a CA the server doesn't trust → alert unknown_ca
+  | 'mtls-expired';     // client cert past its notAfter date → alert certificate_expired
+
+export function isMtlsFailureMode(mode: FailureMode | undefined): boolean {
+  return mode === 'mtls-no-cert' || mode === 'mtls-unknown-ca' || mode === 'mtls-expired';
+}
+
+// Where the mTLS connection ends: on the origin app itself, or on an edge proxy that
+// verifies the client cert and forwards its identity to the app in a header.
+export type TlsTermination = 'origin' | 'edge-proxy';
 
 export interface HeaderLine {
   name: string;
@@ -52,6 +70,8 @@ export interface RequestConfig {
   extraHeaders?: HeaderLine[];       // user-added (e.g. Authorization)
   crossOrigin?: boolean;             // prepend a CORS preflight (OPTIONS) exchange
   conditionalRefetch?: boolean;      // append a second GET with If-None-Match (GET only)
+  mtls?: boolean;                    // mutual TLS: server requests and verifies a client certificate (https only)
+  tlsTermination?: TlsTermination;   // mtls-s2s scenario only; defaults to 'origin'
 }
 
 export interface ServerConfig {
@@ -66,4 +86,5 @@ export interface Scenario {
   build(req: RequestConfig, server: ServerConfig): SimEvent[];
   presetRequest?: RequestConfig;     // applied to the store when this scenario is selected
   presetServer?: ServerConfig;       // applied to the store when this scenario is selected
+  partyLabels?: Partial<Record<Party, string>>; // override lifeline names, e.g. client → "Merchant server"
 }

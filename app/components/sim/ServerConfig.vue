@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { useSimulatorStore } from '../../stores/simulator';
 import { statusCatalog, statusClassColor, type StatusClass } from '../../../engine/statusCatalog';
-import type { FailureMode } from '../../../engine/types';
+import { isMtlsFailureMode, type FailureMode } from '../../../engine/types';
 
 const store = useSimulatorStore();
 const allClasses: StatusClass[] = ['1xx', '2xx', '3xx', '4xx', '5xx'];
@@ -20,7 +20,16 @@ const failureModes: { value: FailureMode; label: string }[] = [
   { value: 'refused', label: 'Connection refused' },
   { value: 'tls-error', label: 'TLS handshake error' },
   { value: 'timeout', label: 'Request timeout' },
+  { value: 'mtls-no-cert', label: 'mTLS: no client certificate' },
+  { value: 'mtls-unknown-ca', label: 'mTLS: client cert from untrusted CA' },
+  { value: 'mtls-expired', label: 'mTLS: client cert expired' },
 ];
+
+function isDisabled(mode: FailureMode): boolean {
+  if (mode === 'tls-error') return !store.requestConfig.https;
+  if (isMtlsFailureMode(mode)) return !(store.requestConfig.https && store.requestConfig.mtls);
+  return false;
+}
 
 function select(code: number) {
   store.updateServerConfig({ statusCode: code });
@@ -42,7 +51,7 @@ function onFailureModeChange(event: Event) {
           v-for="f in failureModes"
           :key="f.value"
           :value="f.value"
-          :disabled="f.value === 'tls-error' && !store.requestConfig.https"
+          :disabled="isDisabled(f.value)"
         >{{ f.label }}</option>
       </select>
     </label>
